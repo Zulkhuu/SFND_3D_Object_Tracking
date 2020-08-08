@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <set>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -153,6 +154,38 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
-{
-    // ...
+{    
+    const int curr_bb_size = currFrame.boundingBoxes.size();
+    const int prev_bb_size = prevFrame.boundingBoxes.size();
+
+    vector<vector<int>> BB_matches(curr_bb_size, vector<int>(prev_bb_size, 0));
+
+    for (const auto& match : matches)
+    {
+        const auto& prev_kpt = prevFrame.keypoints[match.queryIdx].pt;
+        const auto& curr_kpt = currFrame.keypoints[match.trainIdx].pt;
+
+        for (const auto& prev_BB : prevFrame.boundingBoxes)
+        {
+            if (!prev_BB.roi.contains(prev_kpt)) 
+                continue;
+            
+            for (const auto& curr_BB : currFrame.boundingBoxes)
+            {
+                if (!curr_BB.roi.contains(curr_kpt)) 
+                    continue;
+                BB_matches[curr_BB.boxID][prev_BB.boxID]++; 
+            }
+        }
+    }
+    
+    for(int i=0; i<BB_matches.size(); i++) {
+        int curr_max = 0;
+        for(int k=0; k<BB_matches[i].size(); k++) {
+            if(BB_matches[i][k] > curr_max) {
+                curr_max = BB_matches[i][k];
+                bbBestMatches[i] = k;
+            }
+        }
+    }
 }
