@@ -5,6 +5,7 @@
 #include <set>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <pcl/segmentation/extract_clusters.h>
 
 #include "camFusion.hpp"
 #include "dataStructures.h"
@@ -145,11 +146,51 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // ...
 }
 
+double calcMinDist(vector<LidarPoint> &lidarPoints, double clusterTolerance, int minSize, int maxSize)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+    
+    for (const auto& pt : lidarPoints)
+    {
+        if (pt.r > 0.1) // min illuminance
+            input_cloud->push_back(pcl::PointXYZ(pt.x, pt.y, pt.z));
+    }
+
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr kdTree (new pcl::search::KdTree<pcl::PointXYZ>);
+    kdTree->setInputCloud(input_cloud);
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(clusterTolerance); 
+    ec.setMinClusterSize(minSize);
+    ec.setMaxClusterSize(maxSize);
+    ec.setSearchMethod(kdTree);
+    ec.setInputCloud(input_cloud);
+    ec.extract(cluster_indices);
+
+    double min_dist = 99.0;
+    
+    for (const auto& indices : cluster_indices)
+    {
+        for (const auto& index : indices.indices)
+            min_dist = min(min_dist, (double)input_cloud->points[index].x);
+    }
+
+    return min_dist;
+}
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    const double curr_dist = calcMinDist(lidarPointsCurr, 0.2, 5, 3000);
+    const double prev_dist = calcMinDist(lidarPointsPrev, 0.2, 5, 3000);
+    double dt = 1.0/frameRate;
+    cout << dt << " " << curr_dist << " " << prev_dist << endl;
+    if(prev_dist <= curr_dist)
+        TTC = 1000;
+    else
+        TTC = curr_dist*dt/(prev_dist - curr_dist);
 }
 
 
