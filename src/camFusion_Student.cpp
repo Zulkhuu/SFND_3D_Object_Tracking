@@ -135,7 +135,17 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    for (const auto& kpts : kptsCurr)
+    {
+        if (boundingBox.roi.contains(kpts.pt))
+            boundingBox.keypoints.push_back(kpts);
+    }
+
+    for (const auto& kptMatch : kptMatches)
+    {
+        if (boundingBox.roi.contains(kptsCurr[kptMatch.trainIdx].pt) && boundingBox.roi.contains(kptsPrev[kptMatch.queryIdx].pt))
+            boundingBox.kptMatches.push_back(kptMatch);
+    }
 }
 
 
@@ -143,7 +153,60 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+    // compute distance ratios between all matched keypoints
+    vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
+    { // outer kpt. loop
+
+        // get current keypoint and its matched partner in the prev. frame
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2)
+        { // inner kpt.-loop
+
+            double minDist = 100.0; // min. required distance
+
+            // get next keypoint and its matched partner in the prev. frame
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+
+            // compute distances and distance ratios
+            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+            if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist)
+            { // avoid division by zero
+
+                double distRatio = distCurr / distPrev;
+                distRatios.push_back(distRatio);
+            }
+        } // eof inner loop over all matched kpts
+    }     // eof outer loop over all matched kpts
+
+    // only continue if list of distance ratios is not empty
+    if (distRatios.size() == 0)
+    {
+        TTC = NAN;
+        return;
+    }
+
+    // compute camera-based TTC from distance ratios
+    //double meanDistRatio = std::accumulate(distRatios.begin(), distRatios.end(), 0.0) / distRatios.size();
+
+    double dT = 1 / frameRate;
+    //TTC = -dT / (1 - meanDistRatio);
+
+    // STUDENT TASK (replacement for meanDistRatio)
+    sort(distRatios.begin(), distRatios.end());
+    int size = distRatios.size();
+    double medianDistRatio = 0;
+    if (size % 2 == 0)
+        medianDistRatio = (distRatios[size / 2 - 1] + distRatios[size / 2]) / 2;
+    else 
+        medianDistRatio = distRatios[size / 2];
+
+    TTC = -dT / (1 - medianDistRatio);
 }
 
 double calcMinDist(vector<LidarPoint> &lidarPoints, double clusterTolerance, int minSize, int maxSize)
