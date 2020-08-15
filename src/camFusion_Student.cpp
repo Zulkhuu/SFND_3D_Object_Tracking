@@ -251,7 +251,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     double dt = 1.0/frameRate;
     cout << dt << " " << curr_dist << " " << prev_dist << endl;
     if(prev_dist <= curr_dist)
-        TTC = 1000;
+        TTC = NAN;
     else
         TTC = curr_dist*dt/(prev_dist - curr_dist);
 }
@@ -289,6 +289,16 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
             if(BB_matches[i][k] > curr_max) {
                 curr_max = BB_matches[i][k];
                 bbBestMatches[i] = k;
+            }
+        }
+    }
+    
+    for(int k=0; k<BB_matches[0].size(); k++) {
+        int curr_max = 0;
+        for(int i=0; i<BB_matches.size(); i++) {
+            if(BB_matches[i][k] > curr_max) {
+                curr_max = BB_matches[i][k];
+                bbBestMatches[k] = i;
             }
         }
     }
