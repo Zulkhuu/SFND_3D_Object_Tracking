@@ -249,7 +249,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     const double curr_dist = calcMinDist(lidarPointsCurr, 0.2, 5, 3000);
     const double prev_dist = calcMinDist(lidarPointsPrev, 0.2, 5, 3000);
     double dt = 1.0/frameRate;
-    cout << dt << " " << curr_dist << " " << prev_dist << endl;
+    //cout << dt << " " << curr_dist << " " << prev_dist << endl;
     if(prev_dist <= curr_dist)
         TTC = NAN;
     else

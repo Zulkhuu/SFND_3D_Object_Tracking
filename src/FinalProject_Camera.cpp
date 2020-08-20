@@ -115,19 +115,21 @@ int main(int argc, const char *argv[])
     /* MAIN LOOP OVER ALL IMAGES */
     vector<perfStat> performances{};
     
+    /*
     // Use this section for testing all possilbe detector/descriptor combination
     vector<string> detectorsTypes{"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
     vector<string> descriptorTypes{"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
     vector<string> distanceTypes{"DES_BINARY", "DES_HOG"};
     save_result = true;
+    */
     
     
-    /*
+    
     // Use this section for running selected detector/descriptor combination
     vector<string> detectorsTypes{"SHITOMASI"};     // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-    vector<string> descriptorTypes{"BRISK"};        // BRIEF, ORB, FREAK, AKAZE, SIFT
+    vector<string> descriptorTypes{"SIFT"};         // BRIEF, ORB, FREAK, AKAZE, SIFT
     vector<string> distanceTypes{"DES_BINARY"};     // DES_BINARY, DES_HOG
-    */
+    
 
     for(const string& detectorType : detectorsTypes) {
         for(const string& descriptorType : descriptorTypes) {
@@ -190,7 +192,7 @@ int main(int argc, const char *argv[])
                     clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
                     // Visualize 3D objects
-                    bVis = false;
+                    bVis = true;
                     if(bVis)
                     {
                         show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(1000, 1000), true);
@@ -348,7 +350,7 @@ int main(int argc, const char *argv[])
                                     perf.ttc[imgIndex] = ttcCamera;
                                 //// EOF STUDENT ASSIGNMENT
 
-                                bVis = false;
+                                bVis = true;
                                 if (bVis)
                                 {
                                     cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
