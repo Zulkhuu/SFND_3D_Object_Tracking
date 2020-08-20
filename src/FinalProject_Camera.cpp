@@ -123,11 +123,9 @@ int main(int argc, const char *argv[])
     save_result = true;
     */
     
-    
-    
     // Use this section for running selected detector/descriptor combination
     vector<string> detectorsTypes{"SHITOMASI"};     // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-    vector<string> descriptorTypes{"SIFT"};         // BRIEF, ORB, FREAK, AKAZE, SIFT
+    vector<string> descriptorTypes{"BRISK"};        // BRIEF, ORB, FREAK, AKAZE, SIFT
     vector<string> distanceTypes{"DES_BINARY"};     // DES_BINARY, DES_HOG
     
 

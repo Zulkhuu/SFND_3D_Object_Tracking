@@ -82,7 +82,7 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
         extractor = cv::AKAZE::create();
     }
     else if (descriptorType.compare("SIFT") == 0) {
-        extractor = cv::SIFT::create();
+        extractor = cv::xfeatures2d::SIFT::create();
     }
     else
     {
@@ -240,7 +240,7 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
     }
     else if (detectorType.compare("SIFT") == 0)
     {
-        detector = cv::SIFT::create();
+        detector = cv::xfeatures2d::SIFT::create();
     }
     else
     {
